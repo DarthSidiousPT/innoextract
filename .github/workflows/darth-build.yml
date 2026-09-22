@@ -74,14 +74,16 @@ jobs:
           ./b2 link=static variant=release --with-iostreams --with-filesystem --with-date_time --with-system --with-program_options
 
       - name: Configure CMake
-        # -DBoost_NO_SYSTEM_PATHS=ON is required: ubuntu-22.04 runners ship a system
-        # Boost 1.74 with its own CMake package config, and CMake's FindBoost.cmake
-        # module prefers that config over BOOST_ROOT/Boost_INCLUDE_DIR whenever it's
-        # present - silently ignoring the Boost 1.90 we just built from source above
-        # (or, as happened without this flag, failing outright because the system
-        # config's per-component packages, e.g. boost_iostreamsConfig.cmake, don't
-        # exist). This flag forces genuine module-mode search using BOOST_ROOT.
-        run: cmake -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DUSE_STATIC_LIBS=ON -DBoost_NO_SYSTEM_PATHS=ON -DBoost_INCLUDE_DIR="build/boost_$BOOST_VER_UNDERSCORES" -DBOOST_ROOT="build/boost_$BOOST_VER_UNDERSCORES"
+        # This runner's CMake no longer ships the legacy FindBoost.cmake module at all
+        # (removed in CMake 4.0 - Boost has shipped its own native CMake config packages
+        # since ~1.70, making the module redundant). So find_package(Boost ...) here
+        # only ever does Config-mode lookup; BOOST_ROOT/Boost_INCLUDE_DIR/
+        # Boost_NO_SYSTEM_PATHS are all Module-mode-only variables and do nothing.
+        # The Boost we just built from source above does generate its own config
+        # package (stage/lib/cmake/Boost-<version>/), so point CMAKE_PREFIX_PATH at
+        # that instead - confirmed locally to correctly resolve Boost_DIR to our
+        # source-built Boost rather than any system-installed one.
+        run: cmake -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DUSE_STATIC_LIBS=ON -DCMAKE_PREFIX_PATH="build/boost_$BOOST_VER_UNDERSCORES/stage"
 
       - name: Build
         run: |

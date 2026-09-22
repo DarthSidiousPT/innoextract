@@ -68,11 +68,13 @@ jobs:
         ./b2 link=static variant=release --with-iostreams --with-filesystem --with-date_time --with-system --with-program_options
 
     - name: Configure CMake
-      # -DBoost_NO_SYSTEM_PATHS=ON: without it, CMake's FindBoost.cmake module prefers
-      # the runner's pre-installed system Boost's own CMake config over BOOST_ROOT,
-      # ignoring the Boost we just built from source above. See darth-build.yml for
-      # the full explanation (same fix, same underlying issue).
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_STATIC_LIBS=ON -DBoost_NO_SYSTEM_PATHS=ON -DBoost_INCLUDE_DIR=build/boost_$BOOST_VER_UNDERSCORES -DBOOST_ROOT=build/boost_$BOOST_VER_UNDERSCORES
+      # This runner's CMake no longer ships the legacy FindBoost.cmake module at all
+      # (removed in CMake 4.0), so find_package(Boost ...) only does Config-mode
+      # lookup - BOOST_ROOT/Boost_INCLUDE_DIR/Boost_NO_SYSTEM_PATHS are Module-mode-only
+      # and do nothing here. Point CMAKE_PREFIX_PATH at the config package the
+      # source-built Boost generates instead. See darth-build.yml for the full
+      # explanation (same fix, same underlying issue).
+      run: cmake -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_STATIC_LIBS=ON -DCMAKE_PREFIX_PATH=build/boost_$BOOST_VER_UNDERSCORES/stage
 
     - name: Build
       run: |
