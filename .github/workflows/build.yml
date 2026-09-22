@@ -9,8 +9,10 @@ on:
       # Restricted to "v*" so this doesn't also fire on the "darth-*" tags that
       # darth-build.yml publishes (which build/release themselves).
       - 'v*'
-    branches:
-      - main
+    # No "branches:" push trigger: darth-build.yml already builds every push to main
+    # (and publishes releases from it). Running this workflow too on the same push
+    # would just duplicate that build for no reason. Still runs for PRs, "v*" tags,
+    # and manual dispatch.
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -66,7 +68,11 @@ jobs:
         ./b2 link=static variant=release --with-iostreams --with-filesystem --with-date_time --with-system --with-program_options
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_STATIC_LIBS=ON -DBoost_INCLUDE_DIR=build/boost_$BOOST_VER_UNDERSCORES -DBOOST_ROOT=build/boost_$BOOST_VER_UNDERSCORES
+      # -DBoost_NO_SYSTEM_PATHS=ON: without it, CMake's FindBoost.cmake module prefers
+      # the runner's pre-installed system Boost's own CMake config over BOOST_ROOT,
+      # ignoring the Boost we just built from source above. See darth-build.yml for
+      # the full explanation (same fix, same underlying issue).
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_STATIC_LIBS=ON -DBoost_NO_SYSTEM_PATHS=ON -DBoost_INCLUDE_DIR=build/boost_$BOOST_VER_UNDERSCORES -DBOOST_ROOT=build/boost_$BOOST_VER_UNDERSCORES
 
     - name: Build
       run: |

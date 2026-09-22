@@ -74,7 +74,14 @@ jobs:
           ./b2 link=static variant=release --with-iostreams --with-filesystem --with-date_time --with-system --with-program_options
 
       - name: Configure CMake
-        run: cmake -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DUSE_STATIC_LIBS=ON -DBoost_INCLUDE_DIR="build/boost_$BOOST_VER_UNDERSCORES" -DBOOST_ROOT="build/boost_$BOOST_VER_UNDERSCORES"
+        # -DBoost_NO_SYSTEM_PATHS=ON is required: ubuntu-22.04 runners ship a system
+        # Boost 1.74 with its own CMake package config, and CMake's FindBoost.cmake
+        # module prefers that config over BOOST_ROOT/Boost_INCLUDE_DIR whenever it's
+        # present - silently ignoring the Boost 1.90 we just built from source above
+        # (or, as happened without this flag, failing outright because the system
+        # config's per-component packages, e.g. boost_iostreamsConfig.cmake, don't
+        # exist). This flag forces genuine module-mode search using BOOST_ROOT.
+        run: cmake -B "${{ github.workspace }}/build" -DCMAKE_BUILD_TYPE="${{ env.BUILD_TYPE }}" -DUSE_STATIC_LIBS=ON -DBoost_NO_SYSTEM_PATHS=ON -DBoost_INCLUDE_DIR="build/boost_$BOOST_VER_UNDERSCORES" -DBOOST_ROOT="build/boost_$BOOST_VER_UNDERSCORES"
 
       - name: Build
         run: |
