@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - '*'
+      # Restricted to "v*" so this doesn't also fire on the "darth-*" tags that
+      # darth-build.yml publishes (which build/release themselves, and aren't
+      # 3-character version tokens the $TAG[0..2] parsing below expects).
+      - 'v*'
 
 jobs:
   build:

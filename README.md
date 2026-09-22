@@ -1,6 +1,17 @@
 
 # innoextract - A tool to unpack installers created by Inno Setup
 
+> **This is [DarthSidiousPT](https://github.com/DarthSidiousPT)'s fork of
+> [doZennn/innoextract](https://github.com/doZennn/innoextract)**, the ZOOM Platform-patched
+> fork of innoextract (adds `--zoom-game-id` and `--print-headers`, used by
+> [zoom-platform.sh](https://github.com/DarthSidiousPT/zoom-platform.sh)). doZennn's fork
+> hasn't cut a GitHub Release since v1.11.1 (March 2024) despite newer Inno Setup support
+> having been merged to its `master` since then, so this fork stays current with that
+> `master` and publishes its own up-to-date builds instead of waiting on upstream's
+> release cadence. Releases here are tagged `darth-<version>` (e.g. `darth-1.11-zoom.1`,
+> matching the `VERSION` file and what `innoextract --version` reports), plus a rolling
+> `darth-latest` that always points at the newest build of `main`.
+
 [Inno Setup](https://jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 6.7.0.
 
 In addition to standard Inno Setup installers, innoextract also supports some modified Inno Setup variants including Martijn Laan's My Inno Setup Extensions 1.3.10 to 3.0.6.1 as well as GOG.com's Inno Setup-based game installers. innoextract is able to unpack Wadjet Eye Games installers (to play with AGS), Arx Fatalis patches (for use with Arx Libertatis) as well as various other Inno Setup executables.

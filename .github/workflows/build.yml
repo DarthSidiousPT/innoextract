@@ -6,11 +6,13 @@ name: Build static linux
 on:
   push:
     tags:
-      - '*'
+      # Restricted to "v*" so this doesn't also fire on the "darth-*" tags that
+      # darth-build.yml publishes (which build/release themselves).
+      - 'v*'
     branches:
-      - master
+      - main
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 env:
