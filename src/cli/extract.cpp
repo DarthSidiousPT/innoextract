@@ -994,6 +994,11 @@ void process_file(const fs::path & installer, const extract_options & o) {
 	if(o.gog_game_id || o.gog || o.zoom_game_id) {
 		entries |= setup::info::RegistryEntries;
 	}
+	if(o.print_headers) {
+		// Needed for install_size and slice_count. The entries are always parsed
+		// from the file anyway, this only stops them from being discarded.
+		entries |= setup::info::DataEntries;
+	}
 	if(!o.extract_unknown) {
 		entries |= setup::info::NoUnknownVersion;
 	}
@@ -1111,6 +1116,28 @@ void process_file(const fs::path & installer, const extract_options & o) {
 		std::cout << if_not_zero("uninstall_display_size", info.header.uninstall_display_size);
 		
 		std::cout << "options: " << info.header.options << '\n';
+
+		// The following are not Inno Setup header fields, they are derived values
+		// for zoom-platform.sh. Each one is left out when it doesn't apply.
+
+		// Inno Setup data version, e.g. "6.6.0 (unicode)"
+		std::cout << "setup_version: " << info.version << '\n';
+
+		// Total size of the game data once installed (all data entries, uncompressed)
+		boost::uint64_t install_size = 0;
+		// Highest slice (.bin file) any data entry ends in
+		boost::uint32_t last_slice = 0;
+		BOOST_FOREACH(const setup::data_entry & entry, info.data_entries) {
+			install_size += entry.uncompressed_size;
+			last_slice = std::max(last_slice, std::max(entry.chunk.first_slice, entry.chunk.last_slice));
+		}
+		std::cout << if_not_zero("install_size", install_size);
+
+		// Number of external .bin files next to the setup exe (slices are numbered from 0).
+		// Not printed when the data is inside the exe.
+		if(offsets.data_offset == 0 && !info.data_entries.empty()) {
+			std::cout << "slice_count: " << (size_t(last_slice) + 1) << '\n';
+		}
 		return;
 	}
 	
