@@ -1,18 +1,15 @@
 name: Build (Darth fork)
 
-# Fork-only build: builds a static innoextract binary from source (same static-link
-# recipe as build.yml's tag-triggered release, so these builds behave the same way) and
-# publishes it to a rolling "darth-latest" GitHub Release on every push to this fork's
-# main, plus a permanent "darth-<VERSION>" release whenever the built binary's
+# Fork-only build: builds a static innoextract binary from source and publishes it to a
+# rolling "darth-latest" GitHub Release on every push to this fork's main, plus a
+# permanent "v<VERSION>" release (e.g. v1.13-darth) whenever the built binary's
 # --version (sourced from the VERSION file) hasn't been released yet. Guarded by the
 # repository check below so that if this file is ever pulled into doZennn's or
 # dscharrer's upstream repo (e.g. by accident via a future PR), it stays inert there
 # instead of running.
 #
-# Tags are created from inside this workflow using GITHUB_TOKEN, which GitHub does not
-# treat as a tag push for triggering other workflows - so this can't set off the
-# inherited build.yml/ci.yml tag-triggered jobs (those are further restricted to "v*"
-# tags anyway, see their own files).
+# This is the only workflow in the fork (the ones inherited from upstream were removed),
+# so nothing else runs on the "v*" tags created here.
 on:
   push:
     branches:
@@ -123,7 +120,7 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=darth-$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Check whether that version was already released
         id: check
@@ -157,7 +154,7 @@ jobs:
         with:
           tag: "${{ steps.ver.outputs.tag }}"
           artifacts: "build/innoextract.tar.gz,build/innoextract-upx.tar.gz"
-          name: "Darth build ${{ steps.ver.outputs.version }}"
+          name: "innoextract ${{ steps.ver.outputs.version }}"
           body: "Automated build of innoextract ${{ steps.ver.outputs.version }} from ${{ github.repository }}@${{ github.sha }}. Unofficial, not from doZennn or upstream innoextract."
           allowUpdates: false
           makeLatest: false
