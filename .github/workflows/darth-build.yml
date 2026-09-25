@@ -1,12 +1,13 @@
 name: Build (Darth fork)
 
-# Fork-only build: builds a static innoextract binary from source and publishes it to a
-# rolling "darth-latest" GitHub Release on every push to this fork's main, plus a
-# permanent "v<VERSION>" release (e.g. v1.13-darth) whenever the built binary's
-# --version (sourced from the VERSION file) hasn't been released yet. Guarded by the
-# repository check below so that if this file is ever pulled into doZennn's or
-# dscharrer's upstream repo (e.g. by accident via a future PR), it stays inert there
-# instead of running.
+# Fork-only build: builds a static innoextract binary from source on every push to this
+# fork's main. Whenever the built binary's --version (sourced from the VERSION file)
+# hasn't been released yet, it also publishes it as a permanent "v<VERSION>" GitHub
+# Release (e.g. v1.13-darth), titled with the tag, marked as the latest release, with the
+# body taken from RELEASE_NOTES.md plus an "Unofficial" quote. A push that doesn't bump
+# VERSION only builds. Guarded by the repository check below so that if this file is ever
+# pulled into doZennn's or dscharrer's upstream repo (e.g. by accident via a future PR),
+# it stays inert there instead of running.
 #
 # This is the only workflow in the fork (the ones inherited from upstream were removed),
 # so nothing else runs on the "v*" tags created here.
@@ -131,30 +132,26 @@ jobs:
             echo "is_new=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Move rolling darth-latest tag to this commit
+      # The release body is RELEASE_NOTES.md (edit it in the same commit that bumps
+      # VERSION) followed by the "Unofficial" quote, so that line is never forgotten.
+      # A missing RELEASE_NOTES.md fails this step, before anything is published.
+      - name: Compose the release notes
+        if: steps.check.outputs.is_new == 'true'
         run: |
-          git tag -f darth-latest
-          git push -f origin darth-latest
-
-      - name: Publish rolling latest release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: darth-latest
-          artifacts: "build/innoextract.tar.gz,build/innoextract-upx.tar.gz"
-          name: "Darth fork build (latest main)"
-          body: "Automated build of innoextract ${{ steps.ver.outputs.version }} from ${{ github.repository }}@${{ github.sha }}. Unofficial, not from doZennn or upstream innoextract."
-          allowUpdates: true
-          makeLatest: false
+          {
+            cat RELEASE_NOTES.md
+            printf '\n> Unofficial, not from doZennn or upstream innoextract.\n'
+          } > build/release_body.md
 
       # Only published when VERSION was bumped, so a plain push to main that didn't
-      # change VERSION just updates darth-latest above instead of minting a new tag.
+      # change VERSION just builds.
       - name: Publish versioned release
         if: steps.check.outputs.is_new == 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: "${{ steps.ver.outputs.tag }}"
           artifacts: "build/innoextract.tar.gz,build/innoextract-upx.tar.gz"
-          name: "innoextract ${{ steps.ver.outputs.version }}"
-          body: "Automated build of innoextract ${{ steps.ver.outputs.version }} from ${{ github.repository }}@${{ github.sha }}. Unofficial, not from doZennn or upstream innoextract."
+          name: "${{ steps.ver.outputs.tag }}"
+          bodyFile: build/release_body.md
           allowUpdates: false
-          makeLatest: false
+          makeLatest: true

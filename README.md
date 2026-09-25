@@ -9,8 +9,7 @@
 > having been merged to its `master` since then, so this fork stays current with that
 > `master` and publishes its own up-to-date builds instead of waiting on upstream's
 > release cadence. Releases here are tagged `v<version>` (e.g. `v1.13-darth`,
-> matching the `VERSION` file and what `innoextract --version` reports), plus a rolling
-> `darth-latest` that always points at the newest build of `main`. (The early
+> matching the `VERSION` file and what `innoextract --version` reports). (The early
 > `darth-1.11-zoom.1` release predates this naming and stays as it is.)
 
 [Inno Setup](https://jrsoftware.org/isinfo.php) is a tool to create installers for Microsoft Windows applications. innoextract allows to extract such installers under non-Windows systems without running the actual installer using wine. innoextract currently supports installers created by Inno Setup 1.2.10 to 6.7.0.
